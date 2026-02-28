@@ -1,6 +1,2 @@
-# Exclude agents folder
-agents/
-
 # Exclude build artifacts and large files
 dist/
-installers/

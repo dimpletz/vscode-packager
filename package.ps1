@@ -68,6 +68,9 @@ if (Test-Path $settingsJsonPath) {
 $installerScript = @'
 # install-vscode4everyone.ps1
 # Auto-generated installer script with embedded VSCode
+#
+# To run this script if you encounter execution policy errors:
+#   powershell -ExecutionPolicy Bypass -File .\install-vscode4everyone.ps1
 
 param(
     [switch]$Force
@@ -319,4 +322,4 @@ $installerScript | Out-File -FilePath $installerPath -Encoding UTF8
 Write-Host "`nInstaller script created successfully!" -ForegroundColor Green
 Write-Host "Output: $installerPath" -ForegroundColor Green
 Write-Host "`nTo install VSCode4Everyone, run:" -ForegroundColor Yellow
-Write-Host "  .\install-vscode4everyone.ps1" -ForegroundColor Yellow
+Write-Host "  powershell -ExecutionPolicy Bypass -File .\dist\install-vscode4everyone.ps1" -ForegroundColor Yellow

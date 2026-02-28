@@ -29,6 +29,41 @@ Both Windows and Mac/Linux versions provide **functionally equivalent** installe
 - ✓ Single-file, self-contained installer
 - ✓ Backup and reinstall capability with force flag
 
+## Setup
+
+Before building the installer, you need to place the required files in the appropriate directories:
+
+### 1. Add VS Code Installer
+
+Download and place the VS Code installer archive in the `installers/` folder:
+
+**Windows:**
+- Download: `VSCode-win32-x64-{version}.zip`
+- Place in: `installers/VSCode-win32-x64-{version}.zip`
+
+**macOS:**
+- Download: `VSCode-darwin-universal-{version}.zip`
+- Place in: `installers/VSCode-darwin-universal-{version}.zip`
+
+**Linux:**
+- Download: `VSCode-linux-x64-{version}.tar.gz`
+- Place in: `installers/VSCode-linux-x64-{version}.tar.gz`
+
+### 2. Add Custom Agents
+
+Place your custom AI agent files (`.agent.md` format) in the `agents/` folder:
+
+```
+agents/
+├── YourCustomAgent.agent.md
+├── AnotherAgent.agent.md
+└── ...
+```
+
+These agents will be automatically embedded in the installer and deployed to the workspace during installation.
+
+> **Note:** Once you've added files to the `agents/` or `installers/` folders, remove the `.gitkeep` file from those directories as it's no longer needed.
+
 ## Building the Installer
 
 > **Note:** To build the Mac/Linux installer, you need to run `package.sh` on a Mac/Linux machine or use WSL (Windows Subsystem for Linux) on Windows. The Windows installer can only be built on Windows.
@@ -36,6 +71,12 @@ Both Windows and Mac/Linux versions provide **functionally equivalent** installe
 ### Windows
 
 Use PowerShell to create the Windows installer:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\package.ps1
+```
+
+Or if you have the execution policy already set:
 
 ```powershell
 .\package.ps1
@@ -53,6 +94,12 @@ The script will:
 #### Installing on Windows
 
 Run the generated installer:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\dist\install-vscode4everyone.ps1
+```
+
+Or if you have the execution policy already set:
 
 ```powershell
 .\dist\install-vscode4everyone.ps1
@@ -77,6 +124,8 @@ Use bash to create the Mac/Linux installer:
 ./package.sh
 ```
 
+> **Note:** The `package.sh` script is already executable when cloned from the repository, so you can run it directly without needing to `chmod +x` it first.
+
 Options:
 - `-f` or `--force`: Remove existing dist directory before creating new installer
 
@@ -90,12 +139,13 @@ The script will:
 
 #### Installing on Mac/Linux
 
-Make the installer executable and run it:
+Run the installer:
 
 ```bash
-chmod +x ./dist/install-vscode4everyone.sh
 ./dist/install-vscode4everyone.sh
 ```
+
+> **Note:** The generated installer is already executable, so you can run it directly without needing to `chmod +x` it first.
 
 Options:
 - `-f` or `--force`: Backup existing installation and reinstall
