@@ -1,0 +1,6 @@
+{
+    "workbench.colorTheme": "Default Light+",
+    "chat.agent.maxRequests": 500,
+    "chat.customAgentInSubagent.enabled": true,
+    "chat.useNestedAgentsMdFiles": true
+}
