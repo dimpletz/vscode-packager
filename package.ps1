@@ -53,24 +53,10 @@ if (Test-Path $agentsDir) {
     $agentsBase64 = ""
 }
 
-# Read VSCode settings.json
-$settingsJsonPath = Join-Path $PSScriptRoot "config\vscode-settings.json"
-if (Test-Path $settingsJsonPath) {
-    Write-Host "`nReading VSCode settings..."  
-    $settingsJsonContent = [System.IO.File]::ReadAllText($settingsJsonPath)
-    Write-Host "Settings file size: $($settingsJsonContent.Length) characters"
-} else {
-    Write-Warning "VSCode settings file not found at: $settingsJsonPath"
-    $settingsJsonContent = "{}"
-}
-
 # Create the installer script
 $installerScript = @'
 # install-vscode4everyone.ps1
 # Auto-generated installer script with embedded VSCode
-#
-# To run this script if you encounter execution policy errors:
-#   powershell -ExecutionPolicy Bypass -File .\install-vscode4everyone.ps1
 
 param(
     [switch]$Force
@@ -145,30 +131,6 @@ finally {
     }
 }
 
-# Create data directory for portable mode
-Write-Host "`nCreating data directory for portable mode..."
-$dataDir = Join-Path $installDir "data"
-if (-not (Test-Path $dataDir)) {
-    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
-    Write-Host "Created: $dataDir" -ForegroundColor Green
-}
-
-# Create User settings directory and settings.json
-Write-Host "`nConfiguring VSCode settings..."
-$userDataDir = Join-Path $dataDir "user-data\User"
-if (-not (Test-Path $userDataDir)) {
-    New-Item -ItemType Directory -Path $userDataDir -Force | Out-Null
-}
-
-# Embedded VSCode settings.json content
-$settingsJsonContent = @"
-'@ + "`r`n$settingsJsonContent`r`n" + @'
-"@
-
-$settingsJsonPath = Join-Path $userDataDir "settings.json"
-[System.IO.File]::WriteAllText($settingsJsonPath, $settingsJsonContent)
-Write-Host "Created: $settingsJsonPath" -ForegroundColor Green
-
 # Create launcher script
 Write-Host "`nCreating launcher scripts..."
 $binDir = Join-Path $installDir "bin"
@@ -182,10 +144,9 @@ $vbsLauncherContent = @"
 Set WshShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' Get the bin directory where both this script and code.cmd are located
-strBinPath = objFSO.GetParentFolderName(WScript.ScriptFullName)
-' code.cmd is in the same bin directory
-strCodeCmd = objFSO.BuildPath(strBinPath, "code.cmd")
+' Get the script directory
+strScriptPath = objFSO.GetParentFolderName(WScript.ScriptFullName)
+strCodeCmd = objFSO.BuildPath(strScriptPath, "code.cmd")
 strWorkspace = WshShell.ExpandEnvironmentStrings("%USERPROFILE%\Documents\vscode4everyone")
 
 ' Create workspace directory if it doesn't exist
@@ -209,56 +170,6 @@ wscript.exe "%~dp0vs-invoker.vbs"
 "@
 [System.IO.File]::WriteAllText($vsCmdPath, $vsCmdContent)
 Write-Host "Created: $vsCmdPath" -ForegroundColor Green
-
-# Create desktop shortcut
-Write-Host "`nCreating desktop shortcut..."
-$desktopPath = [Environment]::GetFolderPath("Desktop")
-$shortcutPath = Join-Path $desktopPath "VS Code 4 Everyone.lnk"
-$WScriptShell = New-Object -ComObject WScript.Shell
-$shortcut = $WScriptShell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $vsCmdPath
-$shortcut.WorkingDirectory = Join-Path $env:USERPROFILE "Documents\vscode4everyone"
-$shortcut.IconLocation = Join-Path $installDir "Code.exe"
-$shortcut.Description = "VS Code 4 Everyone - Portable VSCode with AI Agents"
-$shortcut.Save()
-Write-Host "Created: $shortcutPath" -ForegroundColor Green
-
-# Pin to taskbar
-Write-Host "`nPinning to taskbar..."
-try {
-    # Method 1: Try the Shell verb method first
-    $shell = New-Object -ComObject Shell.Application
-    $folder = $shell.Namespace((Split-Path $shortcutPath))
-    $item = $folder.ParseName((Split-Path $shortcutPath -Leaf))
-    
-    # Try various Pin to Taskbar verb names (they vary by Windows version and locale)
-    $pinVerb = $item.Verbs() | Where-Object { 
-        $_.Name -match 'Pin to taskbar' -or 
-        $_.Name -match 'Pin to tas&kbar' -or
-        $_.Name -match 'タスク バーにピン留めする' -or
-        $_.Name -match 'À la barre des tâches'
-    } | Select-Object -First 1
-    
-    if ($pinVerb) {
-        $pinVerb.DoIt()
-        Start-Sleep -Milliseconds 500
-        Write-Host "Pinned to taskbar successfully!" -ForegroundColor Green
-    } else {
-        # Method 2: Try copying to the TaskBar pinned folder
-        $taskbarPath = Join-Path $env:APPDATA "Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
-        if (Test-Path $taskbarPath) {
-            $taskbarShortcut = Join-Path $taskbarPath "VS Code 4 Everyone.lnk"
-            Copy-Item $shortcutPath $taskbarShortcut -Force
-            Write-Host "Added shortcut to taskbar folder. It may appear after restart." -ForegroundColor Yellow
-        } else {
-            Write-Warning "Automatic taskbar pinning not available on this system."
-            Write-Host "Please right-click the desktop shortcut and select 'Pin to taskbar'." -ForegroundColor Yellow
-        }
-    }
-} catch {
-    Write-Warning "Could not automatically pin to taskbar: $_"
-    Write-Host "Please right-click the desktop shortcut and select 'Pin to taskbar'." -ForegroundColor Yellow
-}
 
 # Install agents if included
 $agentsBase64Data = @"
@@ -322,4 +233,4 @@ $installerScript | Out-File -FilePath $installerPath -Encoding UTF8
 Write-Host "`nInstaller script created successfully!" -ForegroundColor Green
 Write-Host "Output: $installerPath" -ForegroundColor Green
 Write-Host "`nTo install VSCode4Everyone, run:" -ForegroundColor Yellow
-Write-Host "  powershell -ExecutionPolicy Bypass -File .\dist\install-vscode4everyone.ps1" -ForegroundColor Yellow
+Write-Host "  .\install-vscode4everyone.ps1" -ForegroundColor Yellow
